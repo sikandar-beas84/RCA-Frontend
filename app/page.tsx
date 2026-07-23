@@ -10,26 +10,61 @@ export default function Home() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+  // const login = async () => {
+  //   try {
+  //     const res = await api.post('/auth/login', {
+  //       email,
+  //       password,
+  //     });
+
+  //     localStorage.setItem('token', res.data.access_token);
+
+  //     localStorage.setItem(
+  //       'user',
+  //       JSON.stringify(res.data.user),
+  //     );
+
+  //     router.push('/chat');
+  //   } catch (err) {
+  //     console.error(err);
+  //     alert('Invalid Login');
+  //   }
+  // };
+
+
   const login = async () => {
+  console.log("Login clicked");
+
   try {
+    console.log("Calling API...");
+
     const res = await api.post('/auth/login', {
       email,
       password,
     });
 
-    localStorage.setItem('token', res.data.access_token);
+    console.log("Response:", res.data);
 
-    localStorage.setItem(
-      'user',
-      JSON.stringify(res.data.user),
-    );
+    localStorage.setItem('token', res.data.access_token);
+    localStorage.setItem('user', JSON.stringify(res.data.user));
 
     router.push('/chat');
-  } catch (err) {
-    console.error(err);
-    alert('Invalid Login');
+  } catch (err: any) {
+    console.log("Full Error:", err);
+
+    if (err.response) {
+      console.log("Status:", err.response.status);
+      console.log("Data:", err.response.data);
+    } else if (err.request) {
+      console.log("Request Error:", err.request);
+    } else {
+      console.log("Message:", err.message);
+    }
+
+    alert("Login Failed");
   }
 };
+
 
   return (
     <div className="container mt-5" style={{ maxWidth: 450 }}>
