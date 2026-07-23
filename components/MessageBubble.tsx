@@ -13,8 +13,8 @@ export default function MessageBubble({
     <div
       className={`d-flex mb-2 ${
         mine
-          ? 'justify-content-end'
-          : 'justify-content-start'
+          ? 'justify-content-start'
+          : 'justify-content-end'
       }`}
     >
       <div
