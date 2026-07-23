@@ -3,33 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '../services/api';
+import socket from "../services/socket";
 
 export default function Home() {
   const router = useRouter();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
-  // const login = async () => {
-  //   try {
-  //     const res = await api.post('/auth/login', {
-  //       email,
-  //       password,
-  //     });
-
-  //     localStorage.setItem('token', res.data.access_token);
-
-  //     localStorage.setItem(
-  //       'user',
-  //       JSON.stringify(res.data.user),
-  //     );
-
-  //     router.push('/chat');
-  //   } catch (err) {
-  //     console.error(err);
-  //     alert('Invalid Login');
-  //   }
-  // };
 
 
   const login = async () => {
@@ -47,6 +27,12 @@ export default function Home() {
 
     localStorage.setItem('token', res.data.access_token);
     localStorage.setItem('user', JSON.stringify(res.data.user));
+
+    socket.connect();
+
+    socket.emit("user_connected", {
+      userId: res.data.user.id,
+    });
 
     router.push('/chat');
   } catch (err: any) {

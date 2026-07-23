@@ -5,6 +5,7 @@ import { getConversations } from '../services/chat.service';
 import { useChat } from '../context/ChatContext';
 import { useRouter } from 'next/navigation';
 import NewChatModal from './NewChatModal';
+import socket from "../services/socket";
 
 export default function Sidebar() {
   const [conversations, setConversations] = useState<any[]>([]);
@@ -20,6 +21,10 @@ const [currentUser, setCurrentUser] = useState<any>(null);
 
 const router = useRouter();
 const logout = () => {
+
+  // Disconnect socket
+  socket.disconnect();
+
   localStorage.removeItem('token');
   localStorage.removeItem('user');
 
@@ -27,13 +32,49 @@ const logout = () => {
 };
 
   useEffect(() => {
-  const user = localStorage.getItem('user');
+    const user = localStorage.getItem('user');
 
-  if (user) {
-    setCurrentUser(JSON.parse(user));
-  }
+    if (user) {
+      setCurrentUser(JSON.parse(user));
+    }
 
-  loadConversations();
+    loadConversations();
+  }, []);
+
+  useEffect(() => {
+
+  socket.on("user_status", (data) => {
+    console.log("USER STATUS RECEIVED:", data);
+    setConversations((prev) =>
+      prev.map((conversation) => ({
+
+        ...conversation,
+
+        participants: conversation.participants.map((p: any) =>
+
+          p.user.id === data.userId
+            ? {
+                ...p,
+                user: {
+                  ...p.user,
+                  isOnline: data.online,
+                },
+              }
+            : p
+
+        ),
+
+      }))
+    );
+
+  });
+
+  return () => {
+
+    socket.off("user_status");
+
+  };
+
 }, []);
 
   async function loadConversations() {
@@ -106,9 +147,10 @@ const logout = () => {
 
       <div className="list-group list-group-flush">
         {conversations.map((conversation) => {
-          const currentUser = JSON.parse(
-            localStorage.getItem('user') || '{}'
-          );
+
+          // const currentUser = JSON.parse(
+          //   localStorage.getItem('user') || '{}'
+          // );
 
           const otherUser = conversation.participants.find(
             (p: any) => p.user.id !== currentUser.id
@@ -128,9 +170,34 @@ const logout = () => {
                   : ''
               }`}
             >
-              <strong>{otherUser?.user.name}</strong>
-              <br />
-              <small>{otherUser?.user.email}</small>
+              <div className="d-flex justify-content-between align-items-center">
+
+                <div>
+
+                  <strong>{otherUser?.user.name}</strong>
+
+                  <br />
+
+                  <small className="text-muted">
+                    {otherUser?.user.email}
+                  </small>
+
+                </div>
+
+                <div
+                  style={{
+                  width: "12px",
+                  height: "12px",
+                  borderRadius: "50%",
+                  backgroundColor: otherUser?.user.isOnline ? "#22c55e" : "#9ca3af",
+                  border: "2px solid white",
+                  boxShadow: "0 0 4px rgba(0,0,0,0.2)",
+                  flexShrink: 0,
+                }}
+                />
+
+              </div>
+
             </button>
           );
         })}
