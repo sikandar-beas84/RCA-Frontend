@@ -5,11 +5,17 @@ import { createContext, useContext, useState } from 'react';
 interface ChatContextType {
   conversationId: number | null;
   setConversationId: (id: number) => void;
+
+  selectedUser: any;
+  setSelectedUser: (user: any) => void;
 }
 
 const ChatContext = createContext<ChatContextType>({
   conversationId: null,
   setConversationId: () => {},
+
+  selectedUser: null,
+  setSelectedUser: () => {},
 });
 
 export function ChatProvider({
@@ -20,11 +26,17 @@ export function ChatProvider({
   const [conversationId, setConversationId] =
     useState<number | null>(null);
 
+  const [selectedUser, setSelectedUser] =
+    useState<any>(null);
+
   return (
     <ChatContext.Provider
       value={{
         conversationId,
         setConversationId,
+
+        selectedUser,
+        setSelectedUser,
       }}
     >
       {children}

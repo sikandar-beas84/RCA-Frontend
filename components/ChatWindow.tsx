@@ -9,7 +9,10 @@ import socket from '../services/socket';
 
 export default function ChatWindow() {
 
-    const { conversationId } = useChat();
+  const {
+  conversationId,
+  selectedUser,
+} = useChat();
 
   const [messages, setMessages] = useState<any[]>([]);
 
@@ -51,9 +54,32 @@ export default function ChatWindow() {
   return (
     <div className="d-flex flex-column flex-grow-1">
 
-      <div className="border-bottom p-3">
-        <h5>Chat</h5>
-      </div>
+      <div className="border-bottom p-3 bg-white">
+  <div className="d-flex align-items-center">
+
+    <div
+      className="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center me-3"
+      style={{
+        width: 45,
+        height: 45,
+        fontWeight: 'bold',
+      }}
+    >
+      {selectedUser?.name?.charAt(0).toUpperCase()}
+    </div>
+
+    <div>
+      <h5 className="mb-0">
+        {selectedUser?.name}
+      </h5>
+
+      <small className="text-success">
+        Online
+      </small>
+    </div>
+
+  </div>
+</div>
 
       <div
         className="flex-grow-1 p-3"

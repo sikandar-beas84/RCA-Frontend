@@ -6,7 +6,10 @@ import { useChat } from '../context/ChatContext';
 
 export default function Sidebar() {
   const [conversations, setConversations] = useState<any[]>([]);
-  const { setConversationId } = useChat();
+  const {
+  setConversationId,
+  setSelectedUser,
+} = useChat();
 
   useEffect(() => {
     loadConversations();
@@ -47,7 +50,10 @@ export default function Sidebar() {
             <button
               key={conversation.id}
               className="list-group-item list-group-item-action"
-              onClick={() => setConversationId(conversation.id)}
+              onClick={() => {
+                setConversationId(conversation.id);
+                setSelectedUser(otherUser.user);
+              }}
             >
               <strong>{otherUser?.user.name}</strong>
               <br />
