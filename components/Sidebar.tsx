@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getConversations } from '../services/chat.service';
 import { useChat } from '../context/ChatContext';
+import { useRouter } from 'next/navigation';
 
 export default function Sidebar() {
   const [conversations, setConversations] = useState<any[]>([]);
@@ -11,6 +12,13 @@ export default function Sidebar() {
   setSelectedUser,
 } = useChat();
 
+const router = useRouter();
+const logout = () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+
+  router.push('/');
+};
   useEffect(() => {
     loadConversations();
   }, []);
@@ -32,9 +40,16 @@ export default function Sidebar() {
         height: '100vh',
       }}
     >
-      <div className="p-3 border-bottom">
-        <h4>Chats</h4>
-      </div>
+      <div className="p-3 border-bottom d-flex justify-content-between align-items-center">
+  <h4 className="mb-0">Chats</h4>
+
+  <button
+    className="btn btn-sm btn-danger"
+    onClick={logout}
+  >
+    Logout
+  </button>
+</div>
 
       <div className="list-group list-group-flush">
         {conversations.map((conversation) => {

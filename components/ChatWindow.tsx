@@ -15,6 +15,10 @@ export default function ChatWindow() {
 } = useChat();
 
   const [messages, setMessages] = useState<any[]>([]);
+  const currentUser =
+  typeof window !== 'undefined'
+    ? JSON.parse(localStorage.getItem('user') || '{}')
+    : null;
 
   useEffect(() => {
   socket.on('receive_message', (message) => {
@@ -92,7 +96,8 @@ export default function ChatWindow() {
           <MessageBubble
             key={msg.id}
             text={msg.text}
-            mine={false}
+            sender={msg.sender?.name}
+            mine={msg.senderId === currentUser?.id}
           />
         ))}
       </div>
