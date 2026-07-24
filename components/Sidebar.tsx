@@ -25,6 +25,9 @@ const logout = () => {
   // Disconnect socket
   socket.disconnect();
 
+  setConversationId(null);
+  setSelectedUser(null);
+
   localStorage.removeItem('token');
   localStorage.removeItem('user');
 
@@ -89,12 +92,21 @@ const logout = () => {
   await loadConversations();
 }
 
+if (!currentUser) {
+  return (
+    <div className="d-flex justify-content-center align-items-center h-100">
+      Loading...
+    </div>
+  );
+}
+
   return (
     <div
-      className="border-end bg-white"
+      className="border-end bg-white d-flex flex-column"
       style={{
         width: 320,
         height: '100vh',
+        //overflow: "hidden",
       }}
     >
       <div className="border-bottom p-3">
@@ -145,9 +157,16 @@ const logout = () => {
 
 </div>
 
-      <div className="list-group list-group-flush">
+      <div
+        className="list-group list-group-flush flex-grow-1"
+        style={{
+          overflowY: 'auto',
+          minHeight: 0,
+        }}
+      >
         {conversations.map((conversation) => {
 
+          console.log("Conversation:", conversation);
           // const currentUser = JSON.parse(
           //   localStorage.getItem('user') || '{}'
           // );
@@ -155,7 +174,7 @@ const logout = () => {
           const otherUser = conversation.participants.find(
             (p: any) => p.user.id !== currentUser.id
           );
-
+          const lastMessage = conversation.messages?.[0];
           return (
             <button
               key={conversation.id}
@@ -170,33 +189,75 @@ const logout = () => {
                   : ''
               }`}
             >
-              <div className="d-flex justify-content-between align-items-center">
+              <div className="d-flex justify-content-between align-items-start w-100">
 
-                <div>
+  <div
+    style={{
+      overflow: "hidden",
+      flex: 1,
+    }}
+  >
+    <strong>
+      {otherUser?.user.name}
+    </strong>
 
-                  <strong>{otherUser?.user.name}</strong>
+    <br />
 
-                  <br />
+<small
+  className="text-muted d-block"
+  style={{
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  }}
+>
+  {lastMessage
+    ? lastMessage.senderId === currentUser.id
+      ? `You: ${lastMessage.text}`
+      : lastMessage.text
+    : "No messages yet"}
+</small>
 
-                  <small className="text-muted">
-                    {otherUser?.user.email}
-                  </small>
+  </div>
 
-                </div>
+  <div
+    className="text-end ms-2"
+    style={{
+      minWidth: 65,
+    }}
+  >
+    <small className="text-muted">
 
-                <div
-                  style={{
-                  width: "12px",
-                  height: "12px",
-                  borderRadius: "50%",
-                  backgroundColor: otherUser?.user.isOnline ? "#22c55e" : "#9ca3af",
-                  border: "2px solid white",
-                  boxShadow: "0 0 4px rgba(0,0,0,0.2)",
-                  flexShrink: 0,
-                }}
-                />
+      {conversation.messages?.[0]
+        ? new Date(
+            conversation.messages[0].createdAt,
+          ).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : ""}
 
-              </div>
+    </small>
+
+    <div className="mt-1">
+
+      <span
+        className={`rounded-circle d-inline-block ${
+          otherUser?.user.isOnline
+            ? "bg-success"
+            : "bg-secondary"
+        }`}
+        style={{
+          width: 10,
+          height: 10,
+        }}
+      />
+
+    </div>
+
+  </div>
+
+</div>
 
             </button>
           );

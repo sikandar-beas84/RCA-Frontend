@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useChat } from '../context/ChatContext';
 import { getMessages } from '../services/chat.service';
 import MessageBubble from './MessageBubble';
@@ -15,12 +15,15 @@ export default function ChatWindow() {
 } = useChat();
 
   const [messages, setMessages] = useState<any[]>([]);
+  const [typingUser, setTypingUser] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
   const currentUser =
   typeof window !== 'undefined'
     ? JSON.parse(localStorage.getItem('user') || '{}')
     : null;
 
-  useEffect(() => {
+useEffect(() => {
   socket.on('receive_message', (message) => {
     if (message.conversationId === conversationId) {
       setMessages((prev) => [...prev, message]);
@@ -33,6 +36,50 @@ export default function ChatWindow() {
 }, [conversationId]);
 
   useEffect(() => {
+    socket.on('message_status_updated', (updatedMessage) => {
+      console.log('STATUS UPDATED:', updatedMessage);
+
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === updatedMessage.id
+            ? {
+                ...msg,
+                status: updatedMessage.status,
+              }
+            : msg,
+        ),
+      );
+    });
+
+    return () => {
+      socket.off('message_status_updated');
+    };
+  }, []);
+
+  useEffect(() => {
+    socket.on("typing", (data) => {
+      console.log("Typing Received:", data);
+
+      if (data.conversationId === conversationId) {
+        setTypingUser(data.userName);
+      }
+    });
+
+    socket.on("stop_typing", (data) => {
+      console.log("Stop Typing Received:", data);
+
+      if (data.conversationId === conversationId) {
+        setTypingUser("");
+      }
+    });
+
+    return () => {
+      socket.off("typing");
+      socket.off("stop_typing");
+    };
+  }, [conversationId]);
+
+  useEffect(() => {
     if (conversationId) {
       loadMessages();
     }
@@ -40,12 +87,38 @@ export default function ChatWindow() {
 
   async function loadMessages() {
     try {
+      console.log("Loading Conversation:", conversationId);
+console.log("Current User:", currentUser?.id);
       const data = await getMessages(conversationId!);
       setMessages(data);
     } catch (err) {
       console.error(err);
     }
   }
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  }, [messages]);
+
+  useEffect(() => {
+  if (!conversationId || messages.length === 0) return;
+
+  messages.forEach((message) => {
+    // Only mark messages from the OTHER user as seen
+    if (
+      message.senderId !== currentUser?.id &&
+      message.status !== 'SEEN'
+    ) {
+      socket.emit('message_seen', {
+        messageId: message.id,
+      });
+
+      console.log('Seen:', message.id);
+    }
+  });
+}, [messages, conversationId]);
 
   if (!conversationId) {
     return (
@@ -56,7 +129,13 @@ export default function ChatWindow() {
   }
 
   return (
-    <div className="d-flex flex-column flex-grow-1">
+    <div
+      className="d-flex flex-column flex-grow-1"
+      style={{
+        height: "100vh",
+        overflow: "hidden",
+      }}
+    >
 
       <div className="border-bottom p-3 bg-white">
         <div className="d-flex align-items-center">
@@ -88,19 +167,39 @@ export default function ChatWindow() {
       <div
         className="flex-grow-1 p-3"
         style={{
-          overflowY: 'auto',
-          background: '#f5f5f5',
+          overflowY: "auto",
+          overflowX: "hidden",
+          background: "#f5f5f5",
+          minHeight: 0,
         }}
       >
         {messages.map((msg) => (
-          <MessageBubble
-            key={msg.id}
-            text={msg.text}
-            sender={msg.sender?.name}
-            mine={msg.senderId === currentUser?.id}
-          />
+       <MessageBubble
+          key={msg.id}
+          text={msg.text}
+          sender={msg.sender?.name}
+          mine={msg.senderId === currentUser?.id}
+          status={msg.status}
+          createdAt={msg.createdAt}
+        />
         ))}
+        <div ref={messagesEndRef} />
       </div>
+
+        {typingUser && (
+          <div
+            className="px-3 py-2"
+            style={{
+              color: "#198754",
+              fontStyle: "italic",
+              fontSize: 14,
+              background: "#fff",
+              borderTop: "1px solid #eee",
+            }}
+          >
+            {typingUser} is typing...
+          </div>
+        )}
 
       <MessageInput />
 

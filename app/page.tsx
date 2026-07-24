@@ -13,43 +13,21 @@ export default function Home() {
 
 
   const login = async () => {
-  console.log("Login clicked");
+    try {
+      const res = await api.post("/auth/login", {
+        email,
+        password,
+      });
 
-  try {
-    console.log("Calling API...");
+      localStorage.setItem("token", res.data.access_token);
+      localStorage.setItem("user", JSON.stringify(res.data.user));
 
-    const res = await api.post('/auth/login', {
-      email,
-      password,
-    });
-
-    console.log("Response:", res.data);
-
-    localStorage.setItem('token', res.data.access_token);
-    localStorage.setItem('user', JSON.stringify(res.data.user));
-
-    socket.connect();
-
-    socket.emit("user_connected", {
-      userId: res.data.user.id,
-    });
-
-    router.push('/chat');
-  } catch (err: any) {
-    console.log("Full Error:", err);
-
-    if (err.response) {
-      console.log("Status:", err.response.status);
-      console.log("Data:", err.response.data);
-    } else if (err.request) {
-      console.log("Request Error:", err.request);
-    } else {
-      console.log("Message:", err.message);
+      router.push("/chat");
+    } catch (err) {
+      console.error(err);
+      alert("Login Failed");
     }
-
-    alert("Login Failed");
-  }
-};
+  };
 
 
   return (

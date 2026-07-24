@@ -4,10 +4,10 @@ import { createContext, useContext, useState } from 'react';
 
 interface ChatContextType {
   conversationId: number | null;
-  setConversationId: (id: number) => void;
+  setConversationId: (id: number | null) => void;
 
   selectedUser: any;
-  setSelectedUser: (user: any) => void;
+  setSelectedUser: (user: any | null) => void;
 }
 
 const ChatContext = createContext<ChatContextType>({
