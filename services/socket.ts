@@ -1,6 +1,7 @@
 import { io } from "socket.io-client";
+import { env } from '@/config/env';
 
-const socket = io("http://192.168.1.144:3000", {
+const socket = io(env.SOCKET_URL, {
   transports: ["websocket"],
   autoConnect: false,
 });
