@@ -1,11 +1,15 @@
 'use client';
 
 interface Props {
-  text: string;
+  text?: string;
   sender?: string;
   mine: boolean;
-  status?: 'SENT' | 'DELIVERED' | 'SEEN';
+  status?: "SENT" | "DELIVERED" | "SEEN";
   createdAt?: string;
+
+  fileUrl?: string;
+  fileName?: string;
+  fileType?: string;
 }
 
 export default function MessageBubble({
@@ -14,6 +18,9 @@ export default function MessageBubble({
   mine,
   status,
   createdAt,
+  fileUrl,
+  fileName,
+  fileType,
 }: Props) {
   return (
     <div
@@ -42,7 +49,31 @@ export default function MessageBubble({
           </div>
         )}
 
-        <div>{text}</div>
+        <>
+        {fileUrl && fileType?.startsWith("image/") && (
+          <img
+            src={`http://localhost:3000${fileUrl}`}
+            alt={fileName}
+            className="img-fluid rounded mb-2"
+            style={{
+              maxWidth: 250,
+              cursor: "pointer",
+            }}
+          />
+        )}
+
+        {fileUrl && !fileType?.startsWith("image/") && (
+          <a
+            href={`http://localhost:3000${fileUrl}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            📄 {fileName}
+          </a>
+        )}
+
+        {text && <div>{text}</div>}
+      </>
 
         <div
           className="d-flex justify-content-end align-items-center mt-2"

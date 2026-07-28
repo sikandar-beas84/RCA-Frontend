@@ -4,11 +4,15 @@ import { useRef, useState, useEffect  } from 'react';
 import socket from '../services/socket';
 import { useChat } from '../context/ChatContext';
 import EmojiPicker from 'emoji-picker-react';
+import { uploadFile } from "../services/chat.service";
 
 export default function MessageInput() {
   const [text, setText] = useState('');
 
   const [showEmoji, setShowEmoji] = useState(false);
+
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const emojiRef = useRef<HTMLDivElement>(null);
 
@@ -89,6 +93,39 @@ const onEmojiClick = (emojiData: any) => {
   setShowEmoji(false);
 };
 
+const handleFileUpload = async (
+  e: React.ChangeEvent<HTMLInputElement>,
+) => {
+  const file = e.target.files?.[0];
+
+  if (!file || !conversationId) return;
+
+  try {
+    setUploading(true);
+
+    const uploaded = await uploadFile(file);
+
+    socket.emit("send_message", {
+      conversationId,
+      senderId: user.id,
+
+      text: "",
+
+      fileUrl: uploaded.fileUrl,
+      fileName: uploaded.fileName,
+      fileType: uploaded.fileType,
+      fileSize: uploaded.fileSize,
+    });
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setUploading(false);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
+};
 
   return (
     <div
@@ -118,7 +155,19 @@ const onEmojiClick = (emojiData: any) => {
             />
           </div>
         )}
-
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="d-none"
+        onChange={handleFileUpload}
+      />
+      <button
+        className="btn btn-outline-secondary me-2"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={uploading}
+      >
+        📎
+      </button>
       <input
         className="form-control"
         placeholder="Type a message..."

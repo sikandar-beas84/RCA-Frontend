@@ -174,14 +174,17 @@ console.log("Current User:", currentUser?.id);
         }}
       >
         {messages.map((msg) => (
-       <MessageBubble
-          key={msg.id}
-          text={msg.text}
-          sender={msg.sender?.name}
-          mine={msg.senderId === currentUser?.id}
-          status={msg.status}
-          createdAt={msg.createdAt}
-        />
+          <MessageBubble
+            key={msg.id}
+            text={msg.text}
+            sender={msg.sender?.name}
+            mine={msg.senderId === currentUser?.id}
+            status={msg.status}
+            createdAt={msg.createdAt}
+            fileUrl={msg.fileUrl}
+            fileName={msg.fileName}
+            fileType={msg.fileType}
+          />
         ))}
         <div ref={messagesEndRef} />
       </div>
