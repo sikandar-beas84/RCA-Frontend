@@ -45,7 +45,9 @@ const logout = () => {
   }, []);
 
   useEffect(() => {
-    console.log("Sidebar Socket Connected:", socket.connected);
+    socket.on("connect", () => {
+    console.log("Sidebar sees socket connected:", socket.id);
+  });
   socket.on("user_status", (data) => {
     console.log("USER STATUS RECEIVED:", data);
     setConversations((prev) =>

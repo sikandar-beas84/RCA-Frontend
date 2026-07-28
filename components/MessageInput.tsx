@@ -1,11 +1,16 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect  } from 'react';
 import socket from '../services/socket';
 import { useChat } from '../context/ChatContext';
+import EmojiPicker from 'emoji-picker-react';
 
 export default function MessageInput() {
   const [text, setText] = useState('');
+
+  const [showEmoji, setShowEmoji] = useState(false);
+
+  const emojiRef = useRef<HTMLDivElement>(null);
 
   const { conversationId, selectedUser } = useChat();
 
@@ -59,8 +64,60 @@ export default function MessageInput() {
     });
   };
 
+  useEffect(() => {
+  function handleClickOutside(event: MouseEvent) {
+    if (
+      emojiRef.current &&
+      !emojiRef.current.contains(event.target as Node)
+    ) {
+      setShowEmoji(false);
+    }
+  }
+
+  document.addEventListener("mousedown", handleClickOutside);
+
+  return () => {
+    document.removeEventListener(
+      "mousedown",
+      handleClickOutside,
+    );
+  };
+}, []);
+
+const onEmojiClick = (emojiData: any) => {
+  setText((prev) => prev + emojiData.emoji);
+  setShowEmoji(false);
+};
+
+
   return (
-    <div className="border-top p-3 d-flex">
+    <div
+        className="border-top p-3 d-flex align-items-center position-relative"
+      >
+
+        <button
+          type="button"
+          className="btn btn-light me-2"
+          onClick={() => setShowEmoji(!showEmoji)}
+        >
+          😀
+        </button>
+
+        {showEmoji && (
+          <div
+            ref={emojiRef}
+            style={{
+              position: "absolute",
+              bottom: 70,
+              left: 10,
+              zIndex: 1000,
+            }}
+          >
+            <EmojiPicker
+              onEmojiClick={onEmojiClick}
+            />
+          </div>
+        )}
 
       <input
         className="form-control"

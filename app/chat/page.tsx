@@ -12,9 +12,11 @@ export default function ChatPage() {
 
     if (!user.id) return;
 
-    const onConnect = () => {
-      console.log("✅ Connected:", socket.id);
+    if (!socket.connected) {
+      socket.connect();
+    }
 
+    const onConnect = () => {
       socket.emit("user_connected", {
         userId: user.id,
       });
@@ -22,9 +24,8 @@ export default function ChatPage() {
 
     socket.on("connect", onConnect);
 
-    if (!socket.connected) {
-      socket.connect();
-    } else {
+    // If already connected, emit immediately
+    if (socket.connected) {
       onConnect();
     }
 
