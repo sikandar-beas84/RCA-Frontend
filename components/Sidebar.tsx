@@ -45,7 +45,7 @@ const logout = () => {
   }, []);
 
   useEffect(() => {
-
+    console.log("Sidebar Socket Connected:", socket.connected);
   socket.on("user_status", (data) => {
     console.log("USER STATUS RECEIVED:", data);
     setConversations((prev) =>
@@ -78,6 +78,78 @@ const logout = () => {
 
   };
 
+}, []);
+
+useEffect(() => {
+  const handleStatusUpdate = (updatedMessage: any) => {
+    console.log("SIDEBAR STATUS UPDATED:", updatedMessage);
+
+    if (updatedMessage.status !== "SEEN") return;
+
+    setConversations((prev) =>
+      prev.map((conversation) =>
+        conversation.id === updatedMessage.conversationId
+          ? {
+              ...conversation,
+              unreadCount: 0,
+            }
+          : conversation
+      )
+    );
+  };
+  console.log("Sidebar Socket Connected:", socket.connected);
+  socket.on("message_status_updated", handleStatusUpdate);
+
+  return () => {
+    socket.off("message_status_updated", handleStatusUpdate);
+  };
+}, []);
+
+useEffect(() => {
+const handleReceiveMessage = (message: any) => {
+  console.log("📩 RECEIVE MESSAGE:", message);
+
+  const me = JSON.parse(localStorage.getItem("user") || "{}");
+
+setConversations((prev) => {
+  console.log("Previous:", prev);
+
+  const index = prev.findIndex(
+    (c) => c.id === message.conversationId,
+  );
+
+  console.log("Index:", index);
+
+  if (index === -1) return prev;
+
+  const updated = [...prev];
+
+  const oldConversation = updated[index];
+
+  console.log("Old:", oldConversation);
+
+  updated[index] = {
+    ...oldConversation,
+    messages: [message],
+    unreadCount: (oldConversation.unreadCount ?? 0) + 1,
+  };
+
+  console.log("New:", updated[index]);
+
+  const [conv] = updated.splice(index, 1);
+  updated.unshift(conv);
+
+  console.log("Final:", updated);
+
+  return updated;
+});
+};
+  console.log("Sidebar Socket Connected:", socket.connected);
+  socket.on("receive_message", handleReceiveMessage);
+
+  return () => {
+    socket.off("receive_message", handleReceiveMessage);
+  };
 }, []);
 
   async function loadConversations() {
@@ -220,27 +292,34 @@ if (!currentUser) {
 
   </div>
 
-  <div
-    className="text-end ms-2"
-    style={{
-      minWidth: 65,
-    }}
-  >
-    <small className="text-muted">
+<div
+  className="text-end ms-2"
+  style={{
+    minWidth: 65,
+  }}
+>
+  <small className="text-muted">
+    {conversation.messages?.[0]
+      ? new Date(
+          conversation.messages[0].createdAt,
+        ).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : ""}
+  </small>
 
-      {conversation.messages?.[0]
-        ? new Date(
-            conversation.messages[0].createdAt,
-          ).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          })
-        : ""}
+  <div className="mt-1">
 
-    </small>
+    {conversation.unreadCount > 0 && (
+      <span
+        className="badge bg-success rounded-pill"
+      >
+        {conversation.unreadCount}
+      </span>
+    )}
 
     <div className="mt-1">
-
       <span
         className={`rounded-circle d-inline-block ${
           otherUser?.user.isOnline
@@ -252,10 +331,10 @@ if (!currentUser) {
           height: 10,
         }}
       />
-
     </div>
 
   </div>
+</div>
 
 </div>
 

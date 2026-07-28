@@ -6,25 +6,30 @@ import ChatWindow from '../../components/ChatWindow';
 import socket from '../../services/socket';
 
 export default function ChatPage() {
+
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
 
     if (!user.id) return;
 
-    // Connect only if not already connected
+    const onConnect = () => {
+      console.log("✅ Connected:", socket.id);
+
+      socket.emit("user_connected", {
+        userId: user.id,
+      });
+    };
+
+    socket.on("connect", onConnect);
+
     if (!socket.connected) {
       socket.connect();
+    } else {
+      onConnect();
     }
 
-    socket.emit('user_connected', {
-      userId: user.id,
-    });
-
-    console.log('Socket Connected:', socket.connected);
-
     return () => {
-      // Don't disconnect here.
-      // We only disconnect on Logout.
+      socket.off("connect", onConnect);
     };
   }, []);
 
