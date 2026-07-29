@@ -1,5 +1,7 @@
 'use client';
 
+import { env } from "@/config/env";
+
 interface Props {
   text?: string;
   sender?: string;
@@ -22,6 +24,9 @@ export default function MessageBubble({
   fileName,
   fileType,
 }: Props) {
+
+  const fileBaseUrl = env.API_URL.replace("/api", "");
+
   return (
     <div
       className={`d-flex mb-3 ${
@@ -52,7 +57,7 @@ export default function MessageBubble({
         <>
         {fileUrl && fileType?.startsWith("image/") && (
           <img
-            src={`http://localhost:3000${fileUrl}`}
+            src={`${fileBaseUrl}${fileUrl}`}
             alt={fileName}
             className="img-fluid rounded mb-2"
             style={{
@@ -64,7 +69,7 @@ export default function MessageBubble({
 
         {fileUrl && !fileType?.startsWith("image/") && (
           <a
-            href={`http://localhost:3000${fileUrl}`}
+            href={`${fileBaseUrl}${fileUrl}`}
             target="_blank"
             rel="noreferrer"
           >

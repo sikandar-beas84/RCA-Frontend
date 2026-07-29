@@ -13,6 +13,7 @@ export default function Sidebar() {
   setConversationId,
   setSelectedUser,
   conversationId,
+  setShowChat,
 } = useChat();
 
 const [showModal, setShowModal] = useState(false);
@@ -20,6 +21,23 @@ const [showModal, setShowModal] = useState(false);
 const [currentUser, setCurrentUser] = useState<any>(null);
 
 const router = useRouter();
+
+const [isMobile, setIsMobile] = useState(false);
+
+useEffect(() => {
+  const checkMobile = () => {
+    setIsMobile(window.innerWidth < 768);
+  };
+
+  checkMobile();
+
+  window.addEventListener("resize", checkMobile);
+
+  return () => {
+    window.removeEventListener("resize", checkMobile);
+  };
+}, []);
+
 const logout = () => {
 
   // Disconnect socket
@@ -175,14 +193,13 @@ if (!currentUser) {
 }
 
   return (
-    <div
-      className="border-end bg-white d-flex flex-column"
-      style={{
-        width: 320,
-        height: '100vh',
-        //overflow: "hidden",
-      }}
-    >
+      <div
+        className="border-end bg-white d-flex flex-column"
+        style={{
+          width: isMobile ? "100%" : 320,
+          height: "100vh",
+        }}
+      >
       <div className="border-bottom p-3">
 
   <div className="d-flex align-items-center">
@@ -256,6 +273,9 @@ if (!currentUser) {
               onClick={() => {
                 setConversationId(conversation.id);
                 setSelectedUser(otherUser.user);
+                if (window.innerWidth < 768) {
+                  setShowChat(true);
+                }
               }}
               className={`list-group-item border-0 rounded-3 mx-2 my-1 ${
                 conversationId === conversation.id

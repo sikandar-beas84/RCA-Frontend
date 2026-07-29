@@ -12,6 +12,7 @@ export default function ChatWindow() {
   const {
   conversationId,
   selectedUser,
+  setShowChat,
 } = useChat();
 
   const [messages, setMessages] = useState<any[]>([]);
@@ -139,6 +140,18 @@ console.log("Current User:", currentUser?.id);
 
       <div className="border-bottom p-3 bg-white">
         <div className="d-flex align-items-center">
+
+          {/* Mobile Back Button */}
+          <button
+            className="btn btn-link d-md-none me-2 p-0"
+            onClick={() => setShowChat(false)}
+            style={{
+              fontSize: 24,
+              textDecoration: "none",
+            }}
+          >
+            ←
+          </button>
 
           <div
             className="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center me-3"

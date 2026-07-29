@@ -8,6 +8,10 @@ interface ChatContextType {
 
   selectedUser: any;
   setSelectedUser: (user: any | null) => void;
+
+  showChat: boolean;
+  setShowChat: (show: boolean) => void;
+
 }
 
 const ChatContext = createContext<ChatContextType>({
@@ -16,6 +20,10 @@ const ChatContext = createContext<ChatContextType>({
 
   selectedUser: null,
   setSelectedUser: () => {},
+
+  showChat: false,
+  setShowChat: () => {},
+
 });
 
 export function ChatProvider({
@@ -29,6 +37,9 @@ export function ChatProvider({
   const [selectedUser, setSelectedUser] =
     useState<any>(null);
 
+  const [showChat, setShowChat] =
+  useState(false);
+
   return (
     <ChatContext.Provider
       value={{
@@ -37,6 +48,9 @@ export function ChatProvider({
 
         selectedUser,
         setSelectedUser,
+
+        showChat,
+        setShowChat,
       }}
     >
       {children}

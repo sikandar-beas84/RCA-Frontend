@@ -4,8 +4,12 @@ import { useEffect } from 'react';
 import Sidebar from '../../components/Sidebar';
 import ChatWindow from '../../components/ChatWindow';
 import socket from '../../services/socket';
+import { useChat } from '@/context/ChatContext';
 
 export default function ChatPage() {
+
+  const { showChat } = useChat();
+
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -34,16 +38,38 @@ export default function ChatPage() {
     };
   }, []);
 
-  return (
+    return (
     <div
-      className="d-flex"
       style={{
         height: "100vh",
         overflow: "hidden",
       }}
     >
-      <Sidebar />
-      <ChatWindow />
+      {/* Desktop */}
+      <div
+        className="d-none d-md-flex"
+        style={{
+          height: "100%",
+        }}
+      >
+        <Sidebar />
+        <ChatWindow />
+      </div>
+
+      {/* Mobile */}
+      <div
+        className="d-md-none w-100"
+        style={{
+          height: "100%",
+          width: "100vw",
+        }}
+      >
+        {showChat ? (
+          <ChatWindow />
+        ) : (
+          <Sidebar />
+        )}
+      </div>
     </div>
   );
 }
