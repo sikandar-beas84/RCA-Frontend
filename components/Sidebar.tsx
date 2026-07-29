@@ -6,6 +6,7 @@ import { useChat } from '../context/ChatContext';
 import { useRouter } from 'next/navigation';
 import NewChatModal from './NewChatModal';
 import socket from "../services/socket";
+import ProfileModal from "./ProfileModal";
 
 export default function Sidebar() {
   const [conversations, setConversations] = useState<any[]>([]);
@@ -19,6 +20,8 @@ export default function Sidebar() {
 const [showModal, setShowModal] = useState(false);
 
 const [currentUser, setCurrentUser] = useState<any>(null);
+
+const [showProfileModal, setShowProfileModal] = useState(false);
 
 const router = useRouter();
 
@@ -81,6 +84,7 @@ const logout = () => {
                 user: {
                   ...p.user,
                   isOnline: data.online,
+                  lastSeen: data.lastSeen,
                 },
               }
             : p
@@ -191,6 +195,14 @@ if (!currentUser) {
     </div>
   );
 }
+const handleProfileUpdated = (user: any) => {
+  setCurrentUser(user);
+
+  localStorage.setItem(
+    "user",
+    JSON.stringify(user),
+  );
+};
 
   return (
       <div
@@ -202,19 +214,36 @@ if (!currentUser) {
       >
       <div className="border-bottom p-3">
 
-  <div className="d-flex align-items-center">
-
     <div
-      className="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center"
-      style={{
-        width: 55,
-        height: 55,
-        fontSize: 22,
-        fontWeight: 'bold',
-      }}
+      className="d-flex align-items-center"
+      style={{ cursor: "pointer" }}
+      onClick={() => setShowProfileModal(true)}
     >
-      {currentUser?.name?.charAt(0).toUpperCase()}
-    </div>
+
+    {currentUser?.avatar ? (
+      <img
+        src={`${process.env.NEXT_PUBLIC_API_URL!.replace("/api", "")}${currentUser.avatar}`}
+        alt=""
+        className="rounded-circle"
+        style={{
+          width: 55,
+          height: 55,
+          objectFit: "cover",
+        }}
+      />
+    ) : (
+      <div
+        className="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center"
+        style={{
+          width: 55,
+          height: 55,
+          fontSize: 22,
+          fontWeight: "bold",
+        }}
+      >
+        {currentUser?.name?.charAt(0).toUpperCase()}
+      </div>
+    )}
 
     <div className="ms-3">
       <h5 className="mb-0">
@@ -248,7 +277,7 @@ if (!currentUser) {
 
 </div>
 
-      <div
+    <div
         className="list-group list-group-flush flex-grow-1"
         style={{
           overflowY: 'auto',
@@ -283,91 +312,121 @@ if (!currentUser) {
                   : ''
               }`}
             >
-              <div className="d-flex justify-content-between align-items-start w-100">
+            <div className="d-flex justify-content-between align-items-start w-100">
+              {otherUser?.user.avatar ? (
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_API_URL!.replace("/api", "")}${otherUser.user.avatar}`}
+                    alt=""
+                    className="rounded-circle me-3"
+                    style={{
+                      width: 50,
+                      height: 50,
+                      objectFit: "cover",
+                    }}
+                  />
+                ) : (
+                  <div
+                    className="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center me-3"
+                    style={{
+                      width: 50,
+                      height: 50,
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {otherUser?.user.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              <div
+                style={{
+                  overflow: "hidden",
+                  flex: 1,
+                }}
+              >
+                <strong>
+                  {otherUser?.user.name}
+                </strong>
 
-  <div
-    style={{
-      overflow: "hidden",
-      flex: 1,
-    }}
-  >
-    <strong>
-      {otherUser?.user.name}
-    </strong>
+                <br />
 
-    <br />
+                <small
+                  className="text-muted d-block"
+                  style={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {lastMessage
+                    ? lastMessage.senderId === currentUser.id
+                      ? `You: ${lastMessage.text}`
+                      : lastMessage.text
+                    : "No messages yet"}
+                </small>
 
-<small
-  className="text-muted d-block"
-  style={{
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-  }}
->
-  {lastMessage
-    ? lastMessage.senderId === currentUser.id
-      ? `You: ${lastMessage.text}`
-      : lastMessage.text
-    : "No messages yet"}
-</small>
+              </div>
 
-  </div>
+              <div
+                className="text-end ms-2"
+                style={{
+                  minWidth: 65,
+                }}
+              >
+                <small className="text-muted">
+                  {conversation.messages?.[0]
+                    ? new Date(
+                        conversation.messages[0].createdAt,
+                      ).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
+                    : ""}
+                </small>
 
-<div
-  className="text-end ms-2"
-  style={{
-    minWidth: 65,
-  }}
->
-  <small className="text-muted">
-    {conversation.messages?.[0]
-      ? new Date(
-          conversation.messages[0].createdAt,
-        ).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })
-      : ""}
-  </small>
+                <div className="mt-1">
 
-  <div className="mt-1">
+                  {conversation.unreadCount > 0 && (
+                    <span
+                      className="badge bg-success rounded-pill"
+                    >
+                      {conversation.unreadCount}
+                    </span>
+                  )}
 
-    {conversation.unreadCount > 0 && (
-      <span
-        className="badge bg-success rounded-pill"
-      >
-        {conversation.unreadCount}
-      </span>
-    )}
+                  <div className="mt-1">
+                    <span
+                      className={`rounded-circle d-inline-block ${
+                        otherUser?.user.isOnline
+                          ? "bg-success"
+                          : "bg-secondary"
+                      }`}
+                      style={{
+                        width: 10,
+                        height: 10,
+                      }}
+                    />
+                  </div>
 
-    <div className="mt-1">
-      <span
-        className={`rounded-circle d-inline-block ${
-          otherUser?.user.isOnline
-            ? "bg-success"
-            : "bg-secondary"
-        }`}
-        style={{
-          width: 10,
-          height: 10,
-        }}
-      />
-    </div>
+                </div>
+              </div>
 
-  </div>
-</div>
-
-</div>
+            </div>
 
             </button>
           );
         })}
       </div>
+
+
       <NewChatModal
         show={showModal}
         onClose={() => setShowModal(false)}
         onCreated={refreshConversations}
+      />
+      <ProfileModal
+        show={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        currentUser={currentUser}
+        onUpdated={handleProfileUpdated}
       />
     </div>
   );

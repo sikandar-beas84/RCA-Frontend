@@ -6,6 +6,7 @@ import { getMessages } from '../services/chat.service';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
 import socket from '../services/socket';
+import ProfileImageModal from "./ProfileImageModal";
 
 export default function ChatWindow() {
 
@@ -17,6 +18,7 @@ export default function ChatWindow() {
 
   const [messages, setMessages] = useState<any[]>([]);
   const [typingUser, setTypingUser] = useState("");
+  const [showProfileImage, setShowProfileImage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const currentUser =
@@ -153,26 +155,67 @@ console.log("Current User:", currentUser?.id);
             ←
           </button>
 
-          <div
-            className="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center me-3"
-            style={{
-              width: 45,
-              height: 45,
-              fontWeight: 'bold',
-            }}
-          >
-            {selectedUser?.name?.charAt(0).toUpperCase()}
-          </div>
+        
 
-          <div>
-            <h5 className="mb-0">
-              {selectedUser?.name}
-            </h5>
+          <div className="d-flex align-items-center">
 
-            <small className="text-success">
-              Online
-            </small>
-          </div>
+  {selectedUser?.avatar ? (
+    <img
+      src={`${process.env.NEXT_PUBLIC_API_URL!.replace("/api", "")}${selectedUser.avatar}`}
+      alt=""
+      className="rounded-circle"
+      style={{
+        width: 45,
+        height: 45,
+        objectFit: "cover",
+        cursor: "pointer",
+      }}
+      onClick={() => setShowProfileImage(true)}
+    />
+  ) : (
+    <div
+      className="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center"
+      style={{
+        width: 45,
+        height: 45,
+        fontWeight: "bold",
+        cursor: "pointer",
+      }}
+      onClick={() => setShowProfileImage(true)}
+    >
+      {selectedUser?.name?.charAt(0).toUpperCase()}
+    </div>
+  )}
+
+  <div className="ms-3">
+
+    <h6
+      className="mb-0 fw-bold"
+      style={{ cursor: "pointer" }}
+      onClick={() => setShowProfileImage(true)}
+    >
+      {selectedUser?.name}
+    </h6>
+
+    <small
+      className={
+        selectedUser?.isOnline
+          ? "text-success"
+          : "text-muted"
+      }
+    >
+      {selectedUser?.isOnline
+      ? "Online"
+      : selectedUser?.lastSeen
+        ? `Last seen ${new Date(
+            selectedUser.lastSeen
+          ).toLocaleString()}`
+        : "Offline"}
+    </small>
+
+  </div>
+
+</div>
 
         </div>
       </div>
@@ -219,6 +262,16 @@ console.log("Current User:", currentUser?.id);
 
       <MessageInput />
 
+      <ProfileImageModal
+      show={showProfileImage}
+      onClose={() => setShowProfileImage(false)}
+      name={selectedUser?.name || ""}
+      image={
+        selectedUser?.avatar
+          ? `${process.env.NEXT_PUBLIC_API_URL!.replace("/api", "")}${selectedUser.avatar}`
+          : undefined
+      }
+    />
     </div>
   );
 }
