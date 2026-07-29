@@ -111,15 +111,23 @@ export default function ProfileModal({
           <Form.Control
             type="file"
             accept="image/*"
-            onChange={(e) => {
-              if (!e.target.files?.length) return;
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                if (!e.target.files || e.target.files.length === 0) return;
 
-              const file = e.target.files[0];
+                const file = e.target.files[0];
 
-              setAvatar(file);
-
-              setPreview(URL.createObjectURL(file));
+                setAvatar(file);
+                setPreview(URL.createObjectURL(file));
             }}
+            // onChange={(e) => {
+            //   if (!e.target.files?.length) return;
+
+            //   const file = e.target.files[0];
+
+            //   setAvatar(file);
+
+            //   setPreview(URL.createObjectURL(file));
+            // }}
           />
 
         </Form.Group>
