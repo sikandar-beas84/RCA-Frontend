@@ -1,6 +1,9 @@
 'use client';
 
 import { env } from "@/config/env";
+import { useState } from "react";
+import MediaViewer from "./MediaViewer";
+import { downloadFile } from "@/utils/downloadFile";
 
 interface Props {
   text?: string;
@@ -26,6 +29,8 @@ export default function MessageBubble({
 }: Props) {
 
   const fileBaseUrl = env.API_URL.replace("/api", "");
+  const [showViewer, setShowViewer] = useState(false);
+  const API_URL = process.env.NEXT_PUBLIC_API_URL!.replace("/api", "");
 
   return (
     <div
@@ -55,26 +60,124 @@ export default function MessageBubble({
         )}
 
         <>
-        {fileUrl && fileType?.startsWith("image/") && (
-          <img
-            src={`${fileBaseUrl}${fileUrl}`}
-            alt={fileName}
-            className="img-fluid rounded mb-2"
-            style={{
-              maxWidth: 250,
-              cursor: "pointer",
-            }}
-          />
-        )}
+        {fileUrl && (
+          <div className="mt-2">
 
-        {fileUrl && !fileType?.startsWith("image/") && (
-          <a
-            href={`${fileBaseUrl}${fileUrl}`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            📄 {fileName}
-          </a>
+            {/* IMAGE */}
+
+            {fileType?.startsWith("image/") && (
+              <>
+                <img
+                  src={`${API_URL}${fileUrl}`}
+                  alt={fileName}
+                  className="rounded"
+                  style={{
+                    maxWidth: 250,
+                    cursor: "pointer",
+                  }}
+                  onClick={() => setShowViewer(true)}
+                />
+
+                <MediaViewer
+                  show={showViewer}
+                  onClose={() => setShowViewer(false)}
+                  image={`${API_URL}${fileUrl}`}
+                  fileName={fileName}
+                />
+              </>
+            )}
+
+            {/* PDF */}
+
+            {fileType === "application/pdf" && (
+              <div className="border rounded p-3">
+
+                <i
+                  className="bi bi-file-earmark-pdf-fill text-danger"
+                  style={{
+                    fontSize: 35,
+                  }}
+                ></i>
+
+                <div className="mt-2">
+                  {fileName}
+                </div>
+
+                <div className="mt-3">
+
+                  <a
+                    href={`${API_URL}${fileUrl}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn btn-sm btn-primary me-2"
+                  >
+                    Open
+                  </a>
+
+                  <button
+                    className="btn btn-success"
+                    onClick={() =>
+                      downloadFile(
+                        fileUrl!,
+                        fileName,
+                      )
+                    }
+                  >
+                    <i className="bi bi-download me-2"></i>
+                    Download
+                  </button>
+
+                </div>
+
+              </div>
+            )}
+
+            {/* VIDEO */}
+
+            {fileType?.startsWith("video/") && (
+              <video
+                controls
+                style={{
+                  maxWidth: 280,
+                  borderRadius: 10,
+                }}
+              >
+                <source
+                  src={`${API_URL}${fileUrl}`}
+                  type={fileType}
+                />
+              </video>
+            )}
+
+            {/* AUDIO */}
+
+            {fileType?.startsWith("audio/") && (
+              <audio controls>
+
+                <source
+                  src={`${API_URL}${fileUrl}`}
+                  type={fileType}
+                />
+
+              </audio>
+            )}
+
+            {/* OTHER */}
+
+            {!fileType?.startsWith("image/") &&
+              !fileType?.startsWith("video/") &&
+              !fileType?.startsWith("audio/") &&
+              fileType !== "application/pdf" && (
+                <a
+                  href={`${API_URL}${fileUrl}`}
+                  download={fileName}
+                  className="btn btn-outline-primary"
+                >
+                  📄 {fileName}
+                </a>
+              )}
+
+          </div>
         )}
 
         {text && <div>{text}</div>}

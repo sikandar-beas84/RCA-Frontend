@@ -12,6 +12,8 @@ export default function MessageInput() {
   const [showEmoji, setShowEmoji] = useState(false);
 
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const emojiRef = useRef<HTMLDivElement>(null);
@@ -100,10 +102,22 @@ const handleFileUpload = async (
 
   if (!file || !conversationId) return;
 
+  const MAX_SIZE = 10 * 1024 * 1024;
+
+  if (file.size > MAX_SIZE) {
+    alert("Maximum file size is 10 MB.");
+    return;
+  }
+
   try {
     setUploading(true);
 
-    const uploaded = await uploadFile(file);
+    const uploaded = await uploadFile(
+      file,
+      (progress) => {
+        setUploadProgress(progress);
+      },
+    );
 
     socket.emit("send_message", {
       conversationId,
@@ -120,6 +134,7 @@ const handleFileUpload = async (
     console.error(err);
   } finally {
     setUploading(false);
+    setUploadProgress(0);
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -161,13 +176,37 @@ const handleFileUpload = async (
         className="d-none"
         onChange={handleFileUpload}
       />
-      <button
-        className="btn btn-outline-secondary me-2"
-        onClick={() => fileInputRef.current?.click()}
-        disabled={uploading}
-      >
-        📎
-      </button>
+      
+      {uploading ? (
+        <div
+          className="me-2 d-flex flex-column align-items-center"
+          style={{
+            width: 50,
+          }}
+        >
+          <div
+            className="spinner-border spinner-border-sm text-success"
+            role="status"
+          />
+
+          <small
+            className="mt-1"
+            style={{
+              fontSize: 10,
+            }}
+          >
+            {uploadProgress}%
+          </small>
+        </div>
+      ) : (
+        <button
+          className="btn btn-outline-secondary me-2"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          📎
+        </button>
+      )}
+
       <input
         className="form-control"
         placeholder="Type a message..."
