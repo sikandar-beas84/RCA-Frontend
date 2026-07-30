@@ -4,7 +4,10 @@ import { useRef, useState, useEffect  } from 'react';
 import socket from '../services/socket';
 import { useChat } from '../context/ChatContext';
 import EmojiPicker from 'emoji-picker-react';
-import { uploadFile } from "../services/chat.service";
+import {
+  uploadFile,
+  uploadAudio,
+} from "../services/chat.service";
 
 export default function MessageInput() {
   const [text, setText] = useState('');
@@ -22,6 +25,15 @@ export default function MessageInput() {
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const typingTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // for audio
+  const [recording, setRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  // for audio
 
   const handleTyping = (value: string) => {
     
@@ -141,6 +153,87 @@ const handleFileUpload = async (
     }
   }
 };
+  //recording start
+  const startRecording = async () => {
+    try {
+      const stream =
+        await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
+
+      const recorder = new MediaRecorder(stream);
+
+      audioChunksRef.current = [];
+
+      recorder.ondataavailable = (event) => {
+        audioChunksRef.current.push(event.data);
+      };
+
+      recorder.onstart = () => {
+        setRecording(true);
+        setRecordingTime(0);
+
+        timerRef.current = setInterval(() => {
+          setRecordingTime((t) => t + 1);
+        }, 1000);
+      };
+
+      recorder.onstop = async () => {
+        setRecording(false);
+
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+        }
+
+        const audioBlob = new Blob(
+          audioChunksRef.current,
+          {
+            type: "audio/webm",
+          },
+        );
+
+        const audioFile = new File(
+          [audioBlob],
+          "voice-message.webm",
+          {
+            type: "audio/webm",
+          },
+        );
+
+        const uploaded =
+          await uploadAudio(audioFile);
+
+        socket.emit("send_message", {
+          conversationId,
+          senderId: user.id,
+
+          text: "",
+
+          fileUrl: uploaded.fileUrl,
+          fileName: uploaded.fileName,
+          fileType: uploaded.fileType,
+          fileSize: uploaded.fileSize,
+        });
+
+        stream
+          .getTracks()
+          .forEach((track) => track.stop());
+      };
+
+      mediaRecorderRef.current = recorder;
+
+      recorder.start();
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const stopRecording = () => {
+    mediaRecorderRef.current?.stop();
+  };
+  //recording end
+
 
   return (
     <div
@@ -219,12 +312,35 @@ const handleFileUpload = async (
         }}
       />
 
-      <button
-        className="btn btn-primary ms-2"
-        onClick={sendMessage}
-      >
-        Send
-      </button>
+      {recording && (
+        <div
+          className="text-danger fw-bold me-2"
+        >
+          🔴 {recordingTime}s
+        </div>
+      )}
+      {text.trim() ? (
+        <button
+          className="btn btn-primary ms-2"
+          onClick={sendMessage}
+        >
+          Send
+        </button>
+      ) : recording ? (
+        <button
+          className="btn btn-danger ms-2"
+          onClick={stopRecording}
+        >
+          ⏹
+        </button>
+      ) : (
+        <button
+          className="btn btn-success ms-2"
+          onClick={startRecording}
+        >
+          🎤
+        </button>
+      )}
 
     </div>
   );

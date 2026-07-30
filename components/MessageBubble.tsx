@@ -4,6 +4,7 @@ import { env } from "@/config/env";
 import { useState } from "react";
 import MediaViewer from "./MediaViewer";
 import { downloadFile } from "@/utils/downloadFile";
+import VoicePlayer from './VoicePlayer';
 
 interface Props {
   text?: string;
@@ -152,14 +153,21 @@ export default function MessageBubble({
             {/* AUDIO */}
 
             {fileType?.startsWith("audio/") && (
-              <audio controls>
-
-                <source
-                  src={`${API_URL}${fileUrl}`}
-                  type={fileType}
+              <div className="mt-2">
+                <VoicePlayer
+                  src={`${process.env.NEXT_PUBLIC_API_URL!.replace(
+                    "/api",
+                    "",
+                  )}${fileUrl}`}
                 />
-
-              </audio>
+                <button
+                  className="btn btn-sm btn-success mt-2"
+                  onClick={() => downloadFile(fileUrl!, fileName)}
+                >
+                  <i className="bi bi-download me-2"></i>
+                  Download
+                </button>
+              </div>
             )}
 
             {/* OTHER */}
