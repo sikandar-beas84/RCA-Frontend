@@ -21,7 +21,12 @@ export default function MessageInput() {
 
   const emojiRef = useRef<HTMLDivElement>(null);
 
-  const { conversationId, selectedUser } = useChat();
+  const {
+    conversationId,
+    selectedUser,
+    replyMessage,
+    setReplyMessage,
+  } = useChat();
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const typingTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -69,14 +74,21 @@ export default function MessageInput() {
 
     if (!conversationId) return;
 
-    socket.emit('send_message', {
+    console.log("Reply Message:", replyMessage);
+
+    socket.emit("send_message", {
       conversationId,
       senderId: user.id,
       text,
+
+      replyToId: replyMessage?.id,
     });
 
-    setText('');
-    socket.emit('stop_typing', {
+    setText("");
+
+    setReplyMessage(null);
+
+    socket.emit("stop_typing", {
       conversationId,
       userId: user.id,
     });
@@ -131,6 +143,13 @@ const handleFileUpload = async (
       },
     );
 
+    console.log("Sending reply:", {
+  conversationId,
+  senderId: user.id,
+  text,
+  replyToId: replyMessage?.id,
+});
+
     socket.emit("send_message", {
       conversationId,
       senderId: user.id,
@@ -141,12 +160,15 @@ const handleFileUpload = async (
       fileName: uploaded.fileName,
       fileType: uploaded.fileType,
       fileSize: uploaded.fileSize,
+
+      replyToId: replyMessage?.id,
     });
   } catch (err) {
     console.error(err);
   } finally {
     setUploading(false);
     setUploadProgress(0);
+    setReplyMessage(null);
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -203,6 +225,13 @@ const handleFileUpload = async (
         const uploaded =
           await uploadAudio(audioFile);
 
+              console.log("Sending reply:", {
+              conversationId,
+              senderId: user.id,
+              text,
+              replyToId: replyMessage?.id,
+            });
+
         socket.emit("send_message", {
           conversationId,
           senderId: user.id,
@@ -213,6 +242,8 @@ const handleFileUpload = async (
           fileName: uploaded.fileName,
           fileType: uploaded.fileType,
           fileSize: uploaded.fileSize,
+
+          replyToId: replyMessage?.id,
         });
 
         stream
@@ -231,6 +262,7 @@ const handleFileUpload = async (
 
   const stopRecording = () => {
     mediaRecorderRef.current?.stop();
+    setReplyMessage(null);
   };
   //recording end
 
@@ -263,6 +295,32 @@ const handleFileUpload = async (
             />
           </div>
         )}
+
+        {replyMessage && (
+          <div
+            className="border rounded p-2 mb-2 bg-light"
+          >
+            <div className="fw-bold text-success">
+              Replying to {replyMessage.sender}
+            </div>
+
+            <div
+              style={{
+                fontSize: 14,
+              }}
+            >
+              {replyMessage.text || "Attachment"}
+            </div>
+
+            <button
+              className="btn btn-sm btn-link text-danger p-0"
+              onClick={() => setReplyMessage(null)}
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
       <input
         ref={fileInputRef}
         type="file"

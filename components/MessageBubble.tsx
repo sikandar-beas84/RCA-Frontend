@@ -5,8 +5,10 @@ import { useState } from "react";
 import MediaViewer from "./MediaViewer";
 import { downloadFile } from "@/utils/downloadFile";
 import VoicePlayer from './VoicePlayer';
+import { useChat } from "../context/ChatContext";
 
 interface Props {
+  id: number;
   text?: string;
   sender?: string;
   mine: boolean;
@@ -16,9 +18,20 @@ interface Props {
   fileUrl?: string;
   fileName?: string;
   fileType?: string;
+
+  replyTo?: {
+    id: number;
+    text: string;
+    sender: {
+      id: number;
+      name: string;
+    };
+    fileType?: string;
+  };
 }
 
 export default function MessageBubble({
+  id,
   text,
   sender,
   mine,
@@ -27,17 +40,31 @@ export default function MessageBubble({
   fileUrl,
   fileName,
   fileType,
+  replyTo
 }: Props) {
 
   const fileBaseUrl = env.API_URL.replace("/api", "");
   const [showViewer, setShowViewer] = useState(false);
   const API_URL = process.env.NEXT_PUBLIC_API_URL!.replace("/api", "");
 
+  const { setReplyMessage } = useChat();
+
   return (
     <div
       className={`d-flex mb-3 ${
         mine ? 'justify-content-start' : 'justify-content-end'
       }`}
+      onContextMenu={(e) => {
+        e.preventDefault();
+
+        setReplyMessage({
+          id,
+          text,
+          sender,
+          fileUrl,
+          fileType,
+        });
+      }}
     >
       <div
         className={`p-3 rounded-4 shadow-sm ${
@@ -187,7 +214,39 @@ export default function MessageBubble({
 
           </div>
         )}
+        {replyTo && (
+          <div
+            className="mb-2 px-2 py-1 rounded"
+            style={{
+              background: mine
+                ? "rgba(255,255,255,.18)"
+                : "#f1f3f5",
+              borderLeft: "4px solid #25D366",
+            }}
+          >
+            <div
+              className="fw-bold"
+              style={{
+                fontSize: 13,
+                color: mine ? "#fff" : "#25D366",
+              }}
+            >
+              {replyTo.sender.name}
+            </div>
 
+            <div
+              style={{
+                fontSize: 13,
+                opacity: .85,
+              }}
+            >
+              {replyTo.text ||
+                (replyTo.fileType
+                  ? "📎 Attachment"
+                  : "")}
+            </div>
+          </div>
+        )}
         {text && <div>{text}</div>}
       </>
 
@@ -230,6 +289,7 @@ export default function MessageBubble({
           )}
         </div>
       </div>
+      
     </div>
   );
 }

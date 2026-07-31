@@ -12,6 +12,9 @@ interface ChatContextType {
   showChat: boolean;
   setShowChat: (show: boolean) => void;
 
+  replyMessage: any;
+  setReplyMessage: (message: any | null) => void;
+
 }
 
 const ChatContext = createContext<ChatContextType>({
@@ -23,6 +26,9 @@ const ChatContext = createContext<ChatContextType>({
 
   showChat: false,
   setShowChat: () => {},
+
+  replyMessage: false,
+  setReplyMessage: () => {},
 
 });
 
@@ -40,6 +46,9 @@ export function ChatProvider({
   const [showChat, setShowChat] =
   useState(false);
 
+  const [replyMessage, setReplyMessage] =
+  useState<any>(null);
+
   return (
     <ChatContext.Provider
       value={{
@@ -51,6 +60,9 @@ export function ChatProvider({
 
         showChat,
         setShowChat,
+
+        replyMessage,
+        setReplyMessage,
       }}
     >
       {children}

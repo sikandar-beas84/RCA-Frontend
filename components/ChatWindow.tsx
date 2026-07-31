@@ -240,6 +240,8 @@ console.log("Current User:", currentUser?.id);
             fileUrl={msg.fileUrl}
             fileName={msg.fileName}
             fileType={msg.fileType}
+            id={msg.id}
+            replyTo={msg.replyTo}
           />
         ))}
         <div ref={messagesEndRef} />
