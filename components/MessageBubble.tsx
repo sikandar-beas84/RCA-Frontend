@@ -1,11 +1,14 @@
 'use client';
 
+import React from "react";
 import { env } from "@/config/env";
 import { useState } from "react";
 import MediaViewer from "./MediaViewer";
 import { downloadFile } from "@/utils/downloadFile";
 import VoicePlayer from './VoicePlayer';
 import { useChat } from "../context/ChatContext";
+import Dropdown from "react-bootstrap/Dropdown";
+import socket from "../services/socket";
 
 interface Props {
   id: number;
@@ -18,6 +21,7 @@ interface Props {
   fileUrl?: string;
   fileName?: string;
   fileType?: string;
+  edited?: boolean;
 
   replyTo?: {
     id: number;
@@ -40,6 +44,7 @@ export default function MessageBubble({
   fileUrl,
   fileName,
   fileType,
+  edited,
   replyTo
 }: Props) {
 
@@ -47,34 +52,166 @@ export default function MessageBubble({
   const [showViewer, setShowViewer] = useState(false);
   const API_URL = process.env.NEXT_PUBLIC_API_URL!.replace("/api", "");
 
-  const { setReplyMessage } = useChat();
+  const { setReplyMessage, setEditingMessage } = useChat();
 
+  const CustomToggle = React.forwardRef<
+      HTMLButtonElement,
+      {
+        children: React.ReactNode;
+        onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
+      }
+    >(({ children, onClick }, ref) => (
+      <button
+        ref={ref}
+        className="btn btn-sm border-0 p-1"
+        style={{
+          width: 24,
+          height: 24,
+          padding: 0,
+          background: "transparent",
+          border: "none",
+          boxShadow: "none",
+        }}
+        onClick={(e) => {
+          e.preventDefault();
+          onClick(e);
+        }}
+      >
+        {children}
+      </button>
+    ));
+    CustomToggle.displayName = "CustomToggle";
+
+    if (text === "🚫 This message was deleted") {
+    return (
+      <div
+        className={`d-flex mb-3 ${
+          mine ? "justify-content-start" : "justify-content-end"
+        }`}
+      >
+        <div
+          className={`p-3 rounded-4 shadow-sm ${
+            mine ? "bg-success text-white" : "bg-white"
+          }`}
+          style={{
+            maxWidth: "70%",
+            minWidth: 120,
+          }}
+        >
+          <i className="bi bi-slash-circle me-2"></i>
+          <em>This message was deleted</em>
+        </div>
+      </div>
+    );
+  }
   return (
     <div
       className={`d-flex mb-3 ${
         mine ? 'justify-content-start' : 'justify-content-end'
       }`}
-      onContextMenu={(e) => {
-        e.preventDefault();
-
-        setReplyMessage({
-          id,
-          text,
-          sender,
-          fileUrl,
-          fileType,
-        });
-      }}
+      
     >
       <div
-        className={`p-3 rounded-4 shadow-sm ${
+        className={`p-3 pt-4 rounded-4 shadow-sm position-relative ${
           mine ? 'bg-success text-white' : 'bg-white'
         }`}
         style={{
-          maxWidth: '70%',
+          maxWidth: "70%",
           minWidth: 120,
+          
         }}
       >
+
+        {mine && (
+          <Dropdown align="end"
+            style={{
+              position: "absolute",
+              top: 2,
+              right: 2,
+            }}
+          >
+            <Dropdown.Toggle
+              as={CustomToggle}
+              id={`msg-menu-${id}`}
+            >
+              <i className="bi bi-three-dots-vertical"></i>
+            </Dropdown.Toggle>
+
+            <Dropdown.Menu
+              style={{
+                minWidth: 150,
+                padding: "6px 0",
+                marginTop: 8,
+                borderRadius: 10,
+              }}
+            >
+              <Dropdown.Item
+                style={{
+                  padding: "8px 14px",
+                  fontSize: 15,
+                }}
+                onClick={() =>
+                  setReplyMessage({
+                    id,
+                    text,
+                    sender,
+                    fileUrl,
+                    fileType,
+                  })
+                }
+              >
+                <i className="bi bi-reply me-2"></i>
+                Reply
+              </Dropdown.Item>
+
+              <Dropdown.Item
+                style={{
+                  padding: "8px 14px",
+                  fontSize: 15,
+                }}
+                onClick={() =>
+                  setEditingMessage({
+                    id,
+                    text,
+                  })
+                }
+              >
+                <i className="bi bi-pencil me-2"></i>
+                Edit
+              </Dropdown.Item>
+
+              <Dropdown.Divider />
+
+              <Dropdown.Item
+                style={{
+                  padding: "8px 14px",
+                  fontSize: 15,
+                }}
+                className="text-danger"
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      "Delete this message?",
+                    )
+                  ) {
+                    const user = JSON.parse(
+                      localStorage.getItem("user") || "{}",
+                    );
+
+                    socket.emit("delete_message", {
+                      messageId: id,
+                      senderId: user.id,
+                    });
+                  }
+                }}
+              >
+                <i className="bi bi-trash me-2"></i>
+                Delete
+              </Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown>
+        )}
+
         {!mine && (
           <div
             className="fw-bold mb-1"
@@ -86,7 +223,7 @@ export default function MessageBubble({
             {sender}
           </div>
         )}
-
+        
         <>
         {fileUrl && (
           <div className="mt-2">
@@ -266,6 +403,16 @@ export default function MessageBubble({
                 })
               : ''}
           </span>
+          {edited && (
+            <small
+              className="ms-2 text-muted"
+              style={{
+                fontStyle: "italic",
+              }}
+            >
+              Edited
+            </small>
+          )}
 
           {mine && (
             <>

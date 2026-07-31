@@ -26,17 +26,17 @@ export default function ChatWindow() {
     ? JSON.parse(localStorage.getItem('user') || '{}')
     : null;
 
-useEffect(() => {
-  socket.on('receive_message', (message) => {
-    if (message.conversationId === conversationId) {
-      setMessages((prev) => [...prev, message]);
-    }
-  });
+  useEffect(() => {
+    socket.on('receive_message', (message) => {
+      if (message.conversationId === conversationId) {
+        setMessages((prev) => [...prev, message]);
+      }
+    });
 
-  return () => {
-    socket.off('receive_message');
-  };
-}, [conversationId]);
+    return () => {
+      socket.off('receive_message');
+    };
+  }, [conversationId]);
 
   useEffect(() => {
     socket.on('message_status_updated', (updatedMessage) => {
@@ -122,6 +122,58 @@ console.log("Current User:", currentUser?.id);
     }
   });
 }, [messages, conversationId]);
+
+useEffect(() => {
+
+  const handleEdited = (updated: any) => {
+
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === updated.id ? updated : m
+      )
+    );
+
+  };
+
+  socket.on(
+    "message_edited",
+    handleEdited,
+  );
+
+  return () => {
+    socket.off(
+      "message_edited",
+      handleEdited,
+    );
+  };
+
+}, []);
+
+useEffect(() => {
+  const handleDeleted = (deletedMessage: any) => {
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === deletedMessage.id
+          ? deletedMessage
+          : msg,
+      ),
+    );
+  };
+
+  socket.on(
+    "message_deleted",
+    handleDeleted,
+  );
+
+  return () => {
+    socket.off(
+      "message_deleted",
+      handleDeleted,
+    );
+  };
+}, []);
+
+
 
   if (!conversationId) {
     return (
@@ -242,6 +294,7 @@ console.log("Current User:", currentUser?.id);
             fileType={msg.fileType}
             id={msg.id}
             replyTo={msg.replyTo}
+            edited={msg.edited}
           />
         ))}
         <div ref={messagesEndRef} />

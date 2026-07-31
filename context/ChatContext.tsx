@@ -15,6 +15,9 @@ interface ChatContextType {
   replyMessage: any;
   setReplyMessage: (message: any | null) => void;
 
+  editingMessage: any;
+  setEditingMessage: (message: any | null) => void;
+
 }
 
 const ChatContext = createContext<ChatContextType>({
@@ -29,6 +32,9 @@ const ChatContext = createContext<ChatContextType>({
 
   replyMessage: false,
   setReplyMessage: () => {},
+
+  editingMessage: false,
+  setEditingMessage: () => {},
 
 });
 
@@ -49,6 +55,9 @@ export function ChatProvider({
   const [replyMessage, setReplyMessage] =
   useState<any>(null);
 
+  const [editingMessage, setEditingMessage] =
+  useState<any>(null);
+
   return (
     <ChatContext.Provider
       value={{
@@ -63,6 +72,9 @@ export function ChatProvider({
 
         replyMessage,
         setReplyMessage,
+
+        editingMessage,
+        setEditingMessage,
       }}
     >
       {children}

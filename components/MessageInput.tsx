@@ -26,6 +26,8 @@ export default function MessageInput() {
     selectedUser,
     replyMessage,
     setReplyMessage,
+    editingMessage,
+    setEditingMessage,
   } = useChat();
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -70,23 +72,36 @@ export default function MessageInput() {
   };
 
   const sendMessage = () => {
+
     if (!text.trim()) return;
 
     if (!conversationId) return;
 
-    console.log("Reply Message:", replyMessage);
+    if (editingMessage) {
+
+      socket.emit("edit_message", {
+        messageId: editingMessage.id,
+        senderId: user.id,
+        text,
+      });
+
+      setEditingMessage(null);
+
+      setText("");
+
+      return;
+    }
 
     socket.emit("send_message", {
       conversationId,
       senderId: user.id,
       text,
-
       replyToId: replyMessage?.id,
     });
 
-    setText("");
-
     setReplyMessage(null);
+
+    setText("");
 
     socket.emit("stop_typing", {
       conversationId,
@@ -265,6 +280,15 @@ const handleFileUpload = async (
     setReplyMessage(null);
   };
   //recording end
+
+
+  //edit message start
+    useEffect(() => {
+      if (editingMessage) {
+        setText(editingMessage.text);
+      }
+    }, [editingMessage]);
+  //edit message end
 
 
   return (
