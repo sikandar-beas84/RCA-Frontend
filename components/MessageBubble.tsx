@@ -22,10 +22,12 @@ interface Props {
   fileName?: string;
   fileType?: string;
   edited?: boolean;
+  deleted?: boolean;
 
   replyTo?: {
     id: number;
     text: string;
+    deleted?: boolean;
     sender: {
       id: number;
       name: string;
@@ -45,6 +47,7 @@ export default function MessageBubble({
   fileName,
   fileType,
   edited,
+  deleted,
   replyTo
 }: Props) {
 
@@ -82,7 +85,7 @@ export default function MessageBubble({
     ));
     CustomToggle.displayName = "CustomToggle";
 
-    if (text === "🚫 This message was deleted") {
+    if (deleted) {
     return (
       <div
         className={`d-flex mb-3 ${
@@ -122,7 +125,9 @@ export default function MessageBubble({
         }}
       >
 
-        {mine && (
+        {mine &&
+          !deleted &&
+          text !== "🚫 This message was deleted" && (
           <Dropdown align="end"
             style={{
               position: "absolute",
@@ -351,6 +356,7 @@ export default function MessageBubble({
 
           </div>
         )}
+        
         {replyTo && (
           <div
             className="mb-2 px-2 py-1 rounded"
@@ -377,13 +383,14 @@ export default function MessageBubble({
                 opacity: .85,
               }}
             >
-              {replyTo.text ||
-                (replyTo.fileType
-                  ? "📎 Attachment"
-                  : "")}
+              {replyTo.deleted
+                ? "🚫 This message was deleted"
+                : replyTo.text ||
+                  (replyTo.fileType ? "📎 Attachment" : "")}
             </div>
           </div>
         )}
+
         {text && <div>{text}</div>}
       </>
 
